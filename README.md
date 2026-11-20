@@ -66,6 +66,29 @@ A tela de login chama a API de verdade:
 
 > Se a API estiver desligada, o login mostra "Não foi possível conectar à API…" em vez de quebrar em silêncio.
 
+## Exclusão de vídeos
+
+A exclusão usa a rota já existente no backend: `DELETE /videos/{video_id}`
+(`app/videos/router.py`). Ela apaga o registro no banco e faz limpeza best-effort
+das pastas locais de upload/mídia. Só o **dono do vídeo** ou um **admin** pode
+apagar; estudante e professor visitante recebem `403`.
+
+Onde o botão aparece:
+
+| Tela | Quem vê | Comportamento |
+| --- | --- | --- |
+| `home.html` (cards do catálogo) | admin | Botão **Excluir** abaixo do card, com confirmação; recarrega a grade e a contagem. |
+| `index.html` (relacionados / próximos vídeos) | admin | Botão **Excluir** no card; remove o vídeo das listagens. Se o vídeo apagado estiver em reprodução, o player volta para a home. |
+| `index.html` (barra do dono) | dono ou admin | Botões **Editar/Apagar** já existentes (`js/dono.js`). |
+| `meus-videos.html` | professor dono / admin | Botão **Apagar** por linha (`js/meus-videos.js`). |
+| `painel-admin.html` | admin | Botão **Apagar** por linha na moderação (`js/painel-admin.js`). |
+
+O botão dos cards fica em `js/exclusao.js`. Ele não aparece para vídeos de
+demonstração (não existem no banco) e não dispara a navegação/seleção do card.
+Erros da API viram alerta (`401` sessão expirada, `403` sem permissão, `404` já
+apagado, falha de rede genérica) e o card só é removido depois que o backend
+confirma a exclusão.
+
 ## Rodar os testes (Jest)
 
 ```bash

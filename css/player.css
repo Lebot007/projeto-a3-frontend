@@ -889,6 +889,41 @@ a.home-card .card-content {
   color: var(--accent);
 }
 
+/* Exclusão pelos cards do catálogo (home, relacionados e sidebar) — só admin.
+   O botão fica fora do link/article clicável do vídeo. */
+.home-card-com-acoes,
+.video-card-com-acoes {
+  min-width: 0;
+}
+
+.home-card-com-acoes {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-card-com-acoes .btn-excluir-card {
+  align-self: flex-start;
+  margin: 8px 4px 0;
+}
+
+.video-card-com-acoes .video-card {
+  margin-bottom: 6px;
+}
+
+.video-card-com-acoes .btn-excluir-card {
+  margin: 0 9px 10px;
+}
+
+.btn-excluir-card {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-excluir-card:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
 .painel-table .acoes {
   display: flex;
   gap: 8px;

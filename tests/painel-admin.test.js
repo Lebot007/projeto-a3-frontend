@@ -88,6 +88,8 @@ async function importarModulo({
 
   jest.unstable_mockModule("../js/sessao.js", () => ({
     exigirPapel: jest.fn(() => usuario),
+    usuarioAtual: jest.fn(() => usuario),
+    papelDoUsuario: jest.fn((u) => u?.role || "estudante"),
   }));
 
   const api = await import("../js/api.js");

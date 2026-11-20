@@ -14,6 +14,7 @@
  * watch page manda o formulário de pesquisa do topo.
  */
 import { consultarCatalogo } from "./catalog.js";
+import { criarBotaoExcluir } from "./exclusao.js";
 import { escapeHtml } from "./recommendations.js";
 import { iniciarUiUpload } from "./upload.js";
 import { API_BASE_URL } from "./api.js";
@@ -41,13 +42,13 @@ function criarCardHome(video) {
   link.className = "video-card home-card";
   link.href = `index.html?video=${encodeURIComponent(video.id)}`;
   link.setAttribute("aria-label", video.title);
+  link.dataset.videoId = video.id;
 
   const thumbnail = video.thumbnail || THUMBNAIL_PADRAO;
 
   link.innerHTML = `
     <div class="thumbnail">
-      <img src="${escapeHtml(thumbnail)}" alt="" loading="lazy"
-           onerror="this.onerror=null;this.src='${THUMBNAIL_PADRAO}';">
+      <img src="${escapeHtml(thumbnail)}" alt="" loading="lazy">
       <span class="thumbnail-duration">${escapeHtml(video.duration || "")}</span>
     </div>
     <div class="card-content">
@@ -56,7 +57,27 @@ function criarCardHome(video) {
     </div>
   `;
 
-  return link;
+  // Fallback de thumbnail via listener (handlers inline são bloqueados pelo
+  // CSP do backend quando o front é servido em /player).
+  const img = link.querySelector("img");
+  img.addEventListener("error", () => {
+    if (img.dataset.fallbackAplicado) return;
+    img.dataset.fallbackAplicado = "1";
+    img.src = THUMBNAIL_PADRAO;
+  });
+
+  const botaoExcluir = criarBotaoExcluir(video, {
+    aoExcluir: () => carregar(elements.searchInput.value.trim()),
+  });
+  if (!botaoExcluir) return link;
+
+  // O botão fica FORA do <a>: botão dentro de link é conteúdo interativo
+  // aninhado (HTML inválido) e confundiria leitor de tela/teclado.
+  const wrapper = document.createElement("div");
+  wrapper.className = "home-card-com-acoes";
+  wrapper.dataset.cardExclusao = "1";
+  wrapper.append(link, botaoExcluir);
+  return wrapper;
 }
 
 export function renderHome(container, videos) {

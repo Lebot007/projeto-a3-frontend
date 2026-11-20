@@ -9,6 +9,8 @@
  * ao clicar, o player explica isso em vez de ficar em silêncio.
  */
 
+import { criarBotaoExcluir } from "./exclusao.js";
+
 /** Thumbnail padrão (SVG local) usada quando o vídeo não tem thumbnail. */
 const THUMBNAIL_PADRAO = "./assets/default-thumbnail.svg";
 
@@ -133,11 +135,25 @@ function createCard(video, compact = false) {
   return article;
 }
 
+function cardComAcoes(video, compact = false) {
+  const card = createCard(video, compact);
+  const botaoExcluir = criarBotaoExcluir(video);
+  if (!botaoExcluir) return card;
+
+  // O article do card tem role=button; o Excluir fica fora dele para não
+  // aninhar controles interativos. O wrapper é removido junto após a exclusão.
+  const wrapper = document.createElement("div");
+  wrapper.className = "video-card-com-acoes";
+  wrapper.dataset.cardExclusao = "1";
+  wrapper.append(card, botaoExcluir);
+  return wrapper;
+}
+
 export function renderRecommendations(container, videos = DEMO_VIDEOS) {
   container.replaceChildren();
 
   videos.forEach((video) => {
-    container.appendChild(createCard(video));
+    container.appendChild(cardComAcoes(video));
   });
 }
 
@@ -145,7 +161,7 @@ export function renderSidebar(container, videos = DEMO_VIDEOS.slice(0, 5)) {
   container.replaceChildren();
 
   videos.forEach((video) => {
-    container.appendChild(createCard(video, true));
+    container.appendChild(cardComAcoes(video, true));
   });
 }
 

@@ -37,6 +37,7 @@ import {
 } from "./catalog.js";
 import { API_BASE_URL, getMedia, getVideoStatus, resolveMediaUrl } from "./api.js";
 import { definirParametro } from "./busca.js";
+import { EVENTO_VIDEO_EXCLUIDO } from "./exclusao.js";
 
 // index.html?video={id} — é assim que a home (home.html) abre um vídeo.
 const PARAMS = new URLSearchParams(window.location.search);
@@ -139,6 +140,19 @@ function initialize() {
 
   window.addEventListener("video-selected", (event) => {
     selecionarVideo(event.detail);
+  });
+
+  // Se o admin excluir pelos cards um vídeo que está em reprodução, o player
+  // não pode continuar tocando um arquivo que acabou de ser apagado.
+  window.addEventListener(EVENTO_VIDEO_EXCLUIDO, (event) => {
+    const excluido = event.detail?.videoId;
+    const atual = fonteAtual?.metadata?.id || CONFIG.VIDEO_ID;
+    if (excluido && atual && String(excluido) === String(atual)) {
+      clearTimers();
+      destroyHls();
+      video.pause();
+      window.location.assign("./home.html");
+    }
   });
 
   // `iniciar()` é assíncrono: qualquer rejeição precisa virar mensagem na tela
