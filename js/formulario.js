@@ -198,7 +198,7 @@ export function tratarErroApi(erro, alvo) {
     return;
   }
   // Falha de rede (API desligada) não é ApiError — fetch lança TypeError.
-  mostrarAviso(alvo.aviso, "Não foi possível conectar à API. Verifique se o backend está rodando em localhost:8000.");
+  mostrarAviso(alvo.aviso, "Não foi possível conectar à API. Verifique se o backend está rodando na porta 8000.");
 }
 
 /* ---------------------------------------------------------------------------
