@@ -4,13 +4,21 @@
  * Vem do config.js. O fallback mantém a página funcionando mesmo sem ele
  * (ex.: testes, ou alguém abrindo um HTML que esqueceu o <script>): quando o
  * player é servido pelo próprio backend (/player/), a API está na mesma
- * origem; senão, assume o uvicorn padrão em localhost:8000.
+ * origem; senão, assume o uvicorn na porta 8000 do MESMO hostname da página
+ * (127.0.0.1 → 127.0.0.1:8000, localhost → localhost:8000). O hostname igual
+ * é o que deixa o cookie de sessão (SameSite=Lax) ser enviado — ver config.js.
  */
+function apiNoMesmoHost() {
+  const { protocol, host } = window.location;
+  if (!protocol.startsWith("http") || !host) return "http://localhost:8000";
+  return `${protocol}//${host.replace(/:\d+$/, "")}:8000`;
+}
+
 const API_BASE_URL =
   window.PLAYER_CONFIG?.API_BASE_URL ||
   (window.location.pathname.startsWith("/player")
     ? window.location.origin
-    : "http://localhost:8000");
+    : apiNoMesmoHost());
 
 /**
  * Erro de HTTP da API com o status anexado (`error.status`).

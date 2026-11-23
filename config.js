@@ -28,15 +28,29 @@ window.PLAYER_CONFIG = window.PLAYER_CONFIG || {};
   //    MESMA origem. É o cenário recomendado no README: zero CORS, zero
   //    configuração, e funciona em qualquer host/porta que você usar.
   //  * Servido por outro servidor (Live Server :5500, http.server, etc.) →
-  //    cai no backend padrão em localhost:8000 (a API tem CORS liberado).
+  //    cai no backend na porta 8000 do MESMO hostname da página (a API tem
+  //    CORS liberado para :5500/:5501 em localhost e 127.0.0.1).
+  //
+  //    Por que o MESMO hostname: a sessão é um cookie HttpOnly SameSite=Lax.
+  //    O Live Server abre em http://127.0.0.1:5500 por padrão; se a API fosse
+  //    sempre http://localhost:8000, página e API ficariam em "sites"
+  //    diferentes (127.0.0.1 x localhost) e o navegador NUNCA enviaria o
+  //    cookie → login "funcionava", mas upload, excluir, Meus vídeos e painel
+  //    admin davam 401. Com o mesmo hostname o cookie é same-site e vai junto.
+  //  * Aberto direto do disco (file://) → http://localhost:8000.
   // ---------------------------------------------------------------------
-  const servidoPeloBackend = window.location.protocol.startsWith("http") &&
+  const viaHttp = window.location.protocol.startsWith("http");
+  const servidoPeloBackend = viaHttp &&
     (window.location.pathname.startsWith("/player") ||
       window.location.port === "8000");
 
+  const apiMesmoHost = viaHttp && window.location.hostname
+    ? `${window.location.protocol}//${window.location.host.replace(/:\d+$/, "")}:8000`
+    : "http://localhost:8000";
+
   config.API_BASE_URL =
     config.API_BASE_URL ||
-    (servidoPeloBackend ? window.location.origin : "http://localhost:8000");
+    (servidoPeloBackend ? window.location.origin : apiMesmoHost);
 
   // POR AMBIENTE (revisão de segurança): a regra acima cobre o dev. Em
   // produção (HTTPS na frente da API — Caddy/nginx), defina a URL pública
