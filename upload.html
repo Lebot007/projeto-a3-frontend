@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Enviar vídeo para a plataforma EduStream">
+  <title>EduStream — Enviar Vídeo</title>
+  <link rel="stylesheet" href="./css/player.css">
+  <style>
+    /* Página dedicada de upload — barra de progresso grande */
+    .upload-page {
+      max-width: 640px;
+      margin: 40px auto;
+      padding: 24px;
+    }
+    .upload-page h1 {
+      margin-bottom: 24px;
+      color: #fff;
+    }
+    .upload-form {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .upload-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: #ccc;
+      font-size: 14px;
+    }
+    .upload-form input[type="text"],
+    .upload-form input[type="file"],
+    .upload-form textarea {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 10px;
+      color: #fff;
+      font-size: 14px;
+    }
+    .upload-form textarea { resize: vertical; }
+
+    /* Barra de progresso grande e visível */
+    .progress-section {
+      margin-top: 24px;
+      display: none;
+    }
+    .progress-section.visible { display: block; }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #ccc;
+      font-size: 14px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 32px;
+      background: #2a2a2a;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #444;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #8BC34A);
+      width: 0%;
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      min-width: 40px;
+    }
+    .progress-fill.processing {
+      background: linear-gradient(90deg, #2196F3, #64B5F6);
+    }
+    .progress-fill.failed {
+      background: linear-gradient(90deg, #f44336, #ef5350);
+    }
+
+    .status-message {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #2a2a2a;
+      color: #fff;
+      text-align: center;
+      font-size: 14px;
+    }
+    .status-message.success { background: #1e3a1e; color: #4CAF50; }
+    .status-message.error   { background: #3a1e1e; color: #f44336; }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      justify-content: space-between;
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #666;
+      color: #ccc;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .btn-secondary:hover { border-color: #fff; color: #fff; }
+  </style>
+</head>
+<body>
+  <!-- Mesma topbar da home para consistência -->
+  <header class="topbar">
+    <a class="brand" href="./home.html" aria-label="EduStream — início">Edu<span>Stream</span></a>
+    <button class="sair-button" id="sairButton" type="button" title="Sair da conta">Sair</button>
+  </header>
+
+  <main class="upload-page">
+    <h1>Enviar Vídeo</h1>
+
+    <form class="upload-form" id="uploadForm">
+      <label>Arquivo (mp4, avi, mov, webm)
+        <input type="file" id="uploadFile" accept=".mp4,.avi,.mov,.webm" required>
+      </label>
+      <label>Título *
+        <input type="text" id="uploadTitulo" maxlength="120" required>
+      </label>
+      <label>Autor *
+        <input type="text" id="uploadAutor" maxlength="80" required>
+      </label>
+      <label>Descrição
+        <textarea id="uploadDescricao" rows="2"></textarea>
+      </label>
+      <label>Tags (separadas por vírgula)
+        <input type="text" id="uploadTags" placeholder="matemática, frações">
+      </label>
+      <label>Categoria
+        <input type="text" id="uploadCategoria" maxlength="60">
+      </label>
+
+      <!-- Barra de progresso grande e visível -->
+      <div class="progress-section" id="progressSection">
+        <div class="progress-label">
+          <span id="progressLabel">Enviando...</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+        <div class="status-message" id="statusMessage">Preparando upload...</div>
+      </div>
+
+      <div class="actions">
+        <a href="./home.html" class="btn-secondary">← Voltar ao catálogo</a>
+        <button class="btn-primary" id="uploadSubmit" type="submit">Enviar</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- Configuração da API (origem do backend) — mesma lógica do home.html -->
+  <script src="./config.js"></script>
+  <script type="module" src="./js/sessao.js"></script>
+
+  <script>
+    // Mesma lógica do config.js: API na porta 8000 do mesmo hostname
+    const API_BASE = window.PLAYER_CONFIG?.API_BASE_URL ||
+      (window.location.port === "8000"
+        ? window.location.origin
+        : `${window.location.protocol}//${window.location.hostname}:8000`);
+
+    const form = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('uploadSubmit');
+    const progressSection = document.getElementById('progressSection');
+    const progressFill = document.getElementById('progressFill');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressLabel = document.getElementById('progressLabel');
+    const statusMessage = document.getElementById('statusMessage');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const file = document.getElementById('uploadFile').files[0];
+      if (!file) return;
+
+      // Trava o formulário
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enviando...';
+      progressSection.classList.add('visible');
+      setStatus('Enviando arquivo...', '');
+
+      const formData = new FormData();
+      formData.append('arquivo', file);
+      formData.append('titulo', document.getElementById('uploadTitulo').value.trim());
+      formData.append('autor', document.getElementById('uploadAutor').value.trim());
+      formData.append('descricao', document.getElementById('uploadDescricao').value.trim());
+      formData.append('tags', document.getElementById('uploadTags').value.trim());
+      formData.append('categoria', document.getElementById('uploadCategoria').value.trim());
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/upload`, true);
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          setProgress(pct, 'Enviando...', '');
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200) {
+          const data = JSON.parse(xhr.responseText);
+          setStatus('Upload concluído! Processando vídeo...', 'success');
+          setProgress(100, 'Upload concluído', '');
+          checkStatus(data.video_id);
+        } else if (xhr.status === 401) {
+          setStatus('Sessão expirada. Faça login novamente.', 'error');
+          resetForm();
+        } else if (xhr.status === 403) {
+          setStatus('Sem permissão para enviar vídeos.', 'error');
+          resetForm();
+        } else {
+          setStatus(`Erro no upload (HTTP ${xhr.status}).`, 'error');
+          resetForm();
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        setStatus('Erro de conexão com o backend.', 'error');
+        resetForm();
+      });
+
+      xhr.send(formData);
+    });
+
+    async function checkStatus(videoId) {
+      progressFill.classList.add('processing');
+      progressLabel.textContent = 'Processando...';
+
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`${API_BASE}/status/${videoId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (data.status === 'completed') {
+            clearInterval(interval);
+            progressFill.classList.remove('processing');
+            setStatus('✅ Vídeo pronto! Redirecionando...', 'success');
+            setProgress(100, 'Concluído', 'success');
+            setTimeout(() => {
+              window.location.href = `./index.html?video=${videoId}`;
+            }, 1500);
+          } else if (data.status === 'failed') {
+            clearInterval(interval);
+            progressFill.classList.remove('processing');
+            progressFill.classList.add('failed');
+            setStatus(`❌ Falha no processamento: ${data.erro || 'erro desconhecido'}`, 'error');
+            resetForm();
+          } else {
+            const rotulo = data.status === 'pending' ? 'Na fila' : 'Transcodificando';
+            progressLabel.textContent = rotulo;
+            setStatus(`⏳ ${rotulo}... (FFmpeg gerando as qualidades HLS)`, '');
+          }
+        } catch (err) {
+          console.error('Erro ao verificar status:', err);
+        }
+      }, 3000);
+    }
+
+    function setProgress(pct, label, state) {
+      progressFill.style.width = pct + '%';
+      progressFill.textContent = pct + '%';
+      progressPercent.textContent = pct + '%';
+      progressLabel.textContent = label;
+      if (state === 'success') progressFill.classList.add('success');
+      if (state === 'error') progressFill.classList.add('failed');
+    }
+
+    function setStatus(msg, state) {
+      statusMessage.textContent = msg;
+      statusMessage.className = 'status-message' + (state ? ' ' + state : '');
+    }
+
+    function resetForm() {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar';
+    }
+  </script>
+</body>
+</html>

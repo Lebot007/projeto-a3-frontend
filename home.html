@@ -22,43 +22,10 @@
          usuário logado — e aqui é a saída. -->
     <button class="sair-button" id="sairButton" type="button" title="Sair da conta">Sair</button>
 
-    <!-- Upload pela interface: antes, publicar um vídeo exigia Swagger ou o
-         scripts/demo_completo.py — ruim para a apresentação. Abre o modal. -->
-    <button class="btn-primary topbar-upload" id="uploadOpenButton" type="button"
-            title="Enviar vídeo para a plataforma">Enviar vídeo</button>
+    <!-- Único botão de upload: leva direto para a tela cheia com barra de progresso -->
+    <a class="btn-primary topbar-upload" href="./upload.html"
+       title="Enviar vídeo para a plataforma">Enviar vídeo</a>
   </header>
-
-  <!-- Modal de upload (multipart -> POST /upload, polling de /status) -->
-  <div class="modal hidden" id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
-    <form class="modal-card" id="uploadForm">
-      <div class="modal-header">
-        <strong id="uploadModalTitle">Enviar vídeo</strong>
-        <button class="icon-button" id="uploadClose" type="button" aria-label="Fechar">×</button>
-      </div>
-
-      <label>Arquivo (mp4, avi, mov, webm)
-        <input type="file" id="uploadFile" accept=".mp4,.avi,.mov,.webm" required>
-      </label>
-      <label>Título *
-        <input type="text" id="uploadTitulo" maxlength="120" required>
-      </label>
-      <label>Autor *
-        <input type="text" id="uploadAutor" maxlength="80" required>
-      </label>
-      <label>Descrição
-        <textarea id="uploadDescricao" rows="2"></textarea>
-      </label>
-      <label>Tags (separadas por vírgula)
-        <input type="text" id="uploadTags" placeholder="matemática, frações">
-      </label>
-      <label>Categoria
-        <input type="text" id="uploadCategoria" maxlength="60">
-      </label>
-
-      <div class="upload-status hidden" id="uploadStatus"></div>
-      <button class="btn-primary" id="uploadSubmit" type="submit">Enviar</button>
-    </form>
-  </div>
 
   <main class="page home-page">
     <!-- Card de sequência de estudos (só ESTUDANTE — js/streak.js mostra;
